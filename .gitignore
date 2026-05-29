@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.claude/
+_title_check.txt
+_st_check.txt
+*.tmp
