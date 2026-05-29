@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>抖店上架助手</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: "Microsoft YaHei","微软雅黑",sans-serif; background:#f0f2f5; color:#333; }
+.header { background:linear-gradient(135deg,#ff4d4f,#ff7875); color:#fff; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; }
+.header h1 { font-size:20px; }
+.header .subtitle { font-size:12px; opacity:.85; }
+.main { display:grid; grid-template-columns:280px 1fr; gap:16px; padding:16px; height:calc(100vh - 64px); }
+.panel { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); overflow:hidden; display:flex; flex-direction:column; }
+.panel-title { font-size:14px; font-weight:bold; padding:12px 16px; border-bottom:1px solid #f0f0f0; background:#fafafa; }
+.panel-body { flex:1; overflow:auto; padding:16px; }
+.btn { display:inline-block; padding:8px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; transition:.2s; }
+.btn-primary { background:#ff4d4f; color:#fff; }
+.btn-primary:hover { background:#ff7875; }
+.btn-default { background:#fff; color:#333; border:1px solid #d9d9d9; }
+.btn-default:hover { border-color:#ff4d4f; color:#ff4d4f; }
+.btn-success { background:#52c41a; color:#fff; }
+.btn-success:hover { background:#73d13d; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+.upload-zone { border:2px dashed #d9d9d9; border-radius:8px; padding:24px; text-align:center; cursor:pointer; transition:.2s; margin-bottom:12px; }
+.upload-zone:hover { border-color:#ff4d4f; }
+.upload-zone.dragover { border-color:#ff4d4f; background:#fff2f0; }
+.upload-zone p { color:#999; font-size:13px; }
+.image-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; margin-top:12px; }
+.image-item { aspect-ratio:1; border-radius:6px; overflow:hidden; border:2px solid transparent; cursor:pointer; position:relative; }
+.image-item img { width:100%; height:100%; object-fit:cover; }
+.image-item:hover { border-color:#ff4d4f; }
+.image-item .del-btn { position:absolute; top:4px; right:4px; width:20px; height:20px; background:rgba(0,0,0,.5); color:#fff; border:none; border-radius:50%; cursor:pointer; font-size:12px; display:none; }
+.image-item:hover .del-btn { display:block; }
+.sheet-tabs { display:flex; gap:0; border-bottom:2px solid #f0f0f0; margin-bottom:12px; flex-wrap:wrap; }
+.sheet-tab { padding:8px 16px; cursor:pointer; font-size:13px; border-bottom:2px solid transparent; margin-bottom:-2px; transition:.2s; white-space:nowrap; }
+.sheet-tab.active { color:#ff4d4f; border-bottom-color:#ff4d4f; font-weight:bold; }
+.table-wrap { overflow:auto; flex:1; }
+.table-wrap table { border-collapse:collapse; font-size:12px; min-width:100%; }
+.table-wrap th { background:#fafafa; padding:6px 8px; border:1px solid #e8e8e8; font-weight:bold; white-space:nowrap; position:sticky; top:0; z-index:1; }
+.table-wrap td { padding:4px 6px; border:1px solid #e8e8e8; min-width:80px; }
+.table-wrap td.ai-cell { background:#e8f4fd; }
+.table-wrap td.manual-cell { background:#fffbe6; }
+.table-wrap td.fixed-cell { background:#f0fdf0; }
+.table-wrap td[contenteditable="true"] { cursor:text; outline:2px solid transparent; }
+.table-wrap td[contenteditable="true"]:focus { outline-color:#ff4d4f; background:#fff; }
+.row-num { color:#999; font-size:11px; text-align:center; min-width:40px !important; }
+.log-list { font-size:12px; max-height:300px; overflow:auto; }
+.log-item { padding:6px 8px; border-bottom:1px solid #f5f5f5; display:flex; gap:8px; }
+.log-time { color:#999; white-space:nowrap; }
+.log-success { color:#52c41a; }
+.log-error { color:#ff4d4f; }
+.log-info { color:#1890ff; }
+.progress-bar { height:6px; background:#f0f0f0; border-radius:3px; margin:8px 0; overflow:hidden; }
+.progress-inner { height:100%; background:#ff4d4f; border-radius:3px; transition:.3s; width:0%; }
+.empty-state { text-align:center; padding:60px 20px; color:#999; }
+.empty-state .icon { font-size:48px; margin-bottom:16px; }
+.action-bar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+.status-dot.ready { background:#52c41a; }
+.status-dot.busy { background:#faad14; animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
+select.dropdown-edit { width:100%; border:none; background:transparent; font-size:12px; padding:2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>抖店上架助手 <span class="subtitle">v1.0</span></h1>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="status-dot ready" id="statusDot"></span>
+    <span style="font-size:13px;" id="statusText">就绪</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- 左侧面板 -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <!-- 上传区 -->
+    <div class="panel">
+      <div class="panel-title">📁 上传文件</div>
+      <div class="panel-body">
+        <div class="upload-zone" id="excelDrop">
+          <p style="font-size:24px;">📊</p>
+          <p>拖入或点击上传 Excel 表格</p>
+          <input type="file" id="excelInput" accept=".xlsx,.xls" hidden>
+        </div>
+        <div class="upload-zone" id="imageDrop">
+          <p style="font-size:24px;">🖼️</p>
+          <p>拖入或点击上传参考图</p>
+          <input type="file" id="imageInput" accept="image/*" multiple hidden>
+        </div>
+        <div class="image-grid" id="imageGrid"></div>
+        <div style="margin-top:8px;font-size:12px;color:#999;">
+          已上传: <span id="imageCount">0</span> 张
+        </div>
+      </div>
+    </div>
+
+    <!-- 操作区 -->
+    <div class="panel">
+      <div class="panel-title">⚡ 操作</div>
+      <div class="panel-body">
+        <div class="action-bar" style="flex-direction:column;">
+          <button class="btn btn-primary" onclick="recognizeAll()" style="width:100%;">
+            🔍 AI 识别全部未填写行
+          </button>
+          <button class="btn btn-primary" onclick="recognizeSelected()" style="width:100%;">
+            🔍 AI 识别当前行
+          </button>
+          <button class="btn btn-default" onclick="generateTitles()" style="width:100%;">
+            ✏️ 生成标题和短标题
+          </button>
+          <button class="btn btn-default" onclick="saveExcel()" style="width:100%;">
+            💾 保存到 Excel
+          </button>
+          <button class="btn btn-default" onclick="exportExcel()" style="width:100%;">
+            📥 下载 Excel
+          </button>
+          <button class="btn btn-success" onclick="startAutoUpload()" disabled id="btnAutoUpload" style="width:100%;">
+            🚀 自动上架（开发中）
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右侧表格区 -->
+  <div class="panel">
+    <div class="panel-title">📋 商品表格</div>
+    <div class="panel-body" style="display:flex;flex-direction:column;padding-top:8px;">
+      <div class="sheet-tabs" id="sheetTabs"></div>
+      <div class="table-wrap" id="tableWrap">
+        <div class="empty-state">
+          <div class="icon">📊</div>
+          <p>请先上传 Excel 表格</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 日志面板 -->
+<div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e8e8;max-height:150px;overflow:auto;display:none;" id="logPanel">
+  <div style="padding:6px 16px;background:#fafafa;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
+    <span style="font-size:13px;font-weight:bold;">📝 操作日志</span>
+    <button class="btn btn-default" style="font-size:12px;padding:2px 8px;" onclick="document.getElementById('logPanel').style.display='none'">✕</button>
+  </div>
+  <div class="log-list" id="logList"></div>
+</div>
+
+<script>
+// 全局状态
+let currentData = null;
+let currentSheet = null;
+let config = null;
+let uploadedImages = [];
+
+// 初始化
+document.addEventListener('DOMContentLoaded', async () => {
+    setupUpload('excelDrop', 'excelInput', handleExcel);
+    setupUpload('imageDrop', 'imageInput', handleImages);
+    try {
+        let resp = await fetch('/api/config');
+        config = await resp.json();
+        log('配置加载完成', 'success');
+    } catch(e) {
+        log('配置加载失败: '+e.message, 'error');
+    }
+});
+
+function setupUpload(dropId, inputId, handler) {
+    const drop = document.getElementById(dropId);
+    const input = document.getElementById(inputId);
+
+    drop.addEventListener('click', () => input.click());
+    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+    drop.addEventListener('drop', e => {
+        e.preventDefault();
+        drop.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length) handler(files);
+    });
+    input.addEventListener('change', e => {
+        if (e.target.files.length) handler(e.target.files);
+    });
+}
+
+// 处理 Excel
+async function handleExcel(files) {
+    const formData = new FormData();
+    formData.append('file', files[0]);
+    setStatus('busy', '解析中...');
+    try {
+        let resp = await fetch('/api/upload-excel', { method:'POST', body:formData });
+        currentData = await resp.json();
+        renderSheetTabs();
+        if (currentData.sheetNames.length) {
+            switchSheet(currentData.sheetNames[0]);
+        }
+        log(`Excel 已加载: ${currentData.sheetNames.length} 个Sheet`, 'success');
+        setStatus('ready', '就绪');
+    } catch(e) {
+        log('Excel 加载失败: '+e.message, 'error');
+        setStatus('ready', '错误');
+    }
+}
+
+// 处理图片上传
+async function handleImages(files) {
+    for (let f of files) {
+        const formData = new FormData();
+        formData.append('file', f);
+        try {
+            await fetch('/api/upload-image', { method:'POST', body:formData });
+            uploadedImages.push(f.name);
+            log(`图片已上传: ${f.name}`, 'success');
+        } catch(e) {
+            log(`图片上传失败: ${f.name}`, 'error');
+        }
+    }
+    document.getElementById('imageCount').textContent = uploadedImages.length;
+    renderImageGrid();
+}
+
+function renderImageGrid() {
+    const grid = document.getElementById('imageGrid');
+    grid.innerHTML = uploadedImages.map(f => `
+        <div class="image-item" onclick="navigator.clipboard.writeText('${f}');log('已复制文件名: ${f}', 'info')">
+            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f5f5f5;font-size:32px;">🖼️</div>
+            <div class="del-btn" onclick="event.stopPropagation();removeImage('${f}')">✕</div>
+            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f}</div>
+        </div>
+    `).join('');
+}
+
+function removeImage(filename) {
+    uploadedImages = uploadedImages.filter(f => f !== filename);
+    document.getElementById('imageCount').textContent = uploadedImages.length;
+    renderImageGrid();
+}
+
+// Sheet 切换
+function renderSheetTabs() {
+    if (!currentData) return;
+    const tabs = document.getElementById('sheetTabs');
+    tabs.innerHTML = currentData.sheetNames.map(sn => `
+        <div class="sheet-tab ${sn === currentSheet ? 'active' : ''}" onclick="switchSheet('${sn}')">${sn}</div>
+    `).join('');
+}
+
+function switchSheet(sn) {
+    currentSheet = sn;
+    renderSheetTabs();
+    renderTable();
+}
+
+// 渲染表格
+function renderTable() {
+    if (!currentData || !currentSheet) return;
+    const sheet = currentData.sheets[currentSheet];
+    if (!sheet) return;
+
+    const { headers, rows } = sheet;
+
+    // 分类列: 图片/人工/AI/固定
+    const colClasses = classifyColumns(headers, currentSheet);
+
+    let html = '<table><thead><tr><th class="row-num">#</th>';
+    headers.forEach(h => {
+        html += `<th>${h}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    rows.forEach((row, idx) => {
+        html += '<tr>';
+        html += `<td class="row-num">${idx + 1}</td>`;
+        headers.forEach(h => {
+            const val = row[h] || '';
+            const cls = colClasses[h] || '';
+            const cellId = `cell_${currentSheet}_${row._row}_${h.replace(/[^a-zA-Z0-9一-龥]/g,'')}`;
+
+            // 检查是否有下拉选项
+            let dropdownHtml = '';
+            if (cls === 'ai-cell' && config) {
+                const catOpts = config.options[currentSheet] || {};
+                const commonOpts = config.options['所有类目'] || {};
+                const fieldOpts = catOpts[h] || commonOpts[h] || {};
+                const optsStr = fieldOpts.options || fieldOpts.fixed || '';
+                if (optsStr && optsStr.includes('/')) {
+                    const opts = optsStr.split('/').filter(o => o.trim());
+                    if (opts.length > 1 && opts.length <= 30) {
+                        dropdownHtml = `<select class="dropdown-edit" onchange="updateCell('${currentSheet}',${row._row},'${h}',this.value)" data-original="${val}">`;
+                        dropdownHtml += `<option value="${val}" selected>${val || '请选择'}</option>`;
+                        opts.forEach(o => {
+                            if (o.trim() !== val) dropdownHtml += `<option value="${o.trim()}">${o.trim()}</option>`;
+                        });
+                        dropdownHtml += '</select>';
+                    }
+                }
+            }
+
+            html += `<td class="${cls}" id="${cellId}">`;
+            if (dropdownHtml) {
+                html += dropdownHtml;
+            } else {
+                html += `<span>${val}</span>`;
+            }
+            html += '</td>';
+        });
+        html += '</tr>';
+    });
+
+    html += '</tbody></table>';
+    document.getElementById('tableWrap').innerHTML = html;
+}
+
+function classifyColumns(headers, category) {
+    if (!config || !config.fields) return {};
+    const catFields = config.fields[category] || [];
+    const commonFields = config.fields['所有类目'] || [];
+    const allFields = [...commonFields, ...catFields];
+
+    // 简化的列分类
+    const classes = {};
+    const manualHeaders = ['参考图', '款号', 'SKU', '售价', '发货模式', '发货时间', '备注'];
+    const aiHeaders = ['商品标题', '短标题', '领型', '袖长', '裙长', '裙型', '裤长', '裤型',
+                       '版型', '风格', '颜色', '材质', '图案', '腰型', '衣长', '厚薄', '衣门襟',
+                       '适用季节', '适用场景', '组合件数', '款式', '适用年龄',
+                       '上装领型', '上装袖长', '下装类型', '下装长度'];
+    const fixedHeaders = ['尺码大小', '适用人群', '规格尺码', '品牌', '面料材质', '预售时间'];
+
+    headers.forEach(h => {
+        for (let mh of manualHeaders) {
+            if (h.includes(mh)) { classes[h] = 'manual-cell'; return; }
+        }
+        for (let ah of aiHeaders) {
+            if (h.includes(ah)) { classes[h] = 'ai-cell'; return; }
+        }
+        for (let fh of fixedHeaders) {
+            if (h.includes(fh)) { classes[h] = 'fixed-cell'; return; }
+        }
+        // 默认
+        if (h.includes('(人工)') || h.includes('SKU') || h.includes('售价')) classes[h] = 'manual-cell';
+        else if (h.includes('(AI') || h.includes('(固定')) classes[h] = 'fixed-cell';
+        else classes[h] = 'ai-cell';
+    });
+    return classes;
+}
+
+// AI 识别当前行
+async function recognizeSelected() {
+    if (!currentData || !currentSheet) { alert('请先加载表格'); return; }
+    const sheet = currentData.sheets[currentSheet];
+    if (!sheet.rows.length) { alert('当前Sheet没有数据'); return; }
+
+    setStatus('busy', 'AI识别中...');
+    const row = sheet.rows[0]; // 识别第一行
+    const imageFile = findImageFile(row);
+    if (!imageFile) { alert('未找到参考图，请先在A列填写图片文件名'); setStatus('ready','就绪'); return; }
+
+    const aiHeaders = getAIHeaders(sheet.headers, currentSheet);
+
+    try {
+        let resp = await fetch('/api/ai-recognize', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({
+                image: imageFile,
+                category: currentSheet,
+                fields: aiHeaders
+            })
+        });
+        let result = await resp.json();
+        if (result.ok && result.attributes) {
+            // 更新行数据
+            for (let [k, v] of Object.entries(result.attributes)) {
+                if (row.hasOwnProperty(k)) {
+                    row[k] = v;
+                }
+            }
+            // 更新当前数据
+            updateDataFromRow(row);
+            renderTable();
+            log(`AI识别完成: ${imageFile}`, 'success');
+        } else {
+            log(`AI识别失败: ${result.error || result.raw}`, 'error');
+        }
+    } catch(e) {
+        log('AI识别出错: '+e.message, 'error');
+    }
+    setStatus('ready', '就绪');
+}
+
+// AI 识别全部
+async function recognizeAll() {
+    if (!currentData || !currentSheet) { alert('请先加载表格'); return; }
+    const sheet = currentData.sheets[currentSheet];
+    if (!sheet.rows.length) return;
+
+    setStatus('busy', 'AI识别中...');
+    const aiHeaders = getAIHeaders(sheet.headers, currentSheet);
+    let total = 0, success = 0;
+
+    for (let row of sheet.rows) {
+        const imageFile = findImageFile(row);
+        if (!imageFile) continue;
+        total++;
+        try {
+            let resp = await fetch('/api/ai-recognize', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ image: imageFile, category: currentSheet, fields: aiHeaders })
+            });
+            let result = await resp.json();
+            if (result.ok && result.attributes) {
+                for (let [k, v] of Object.entries(result.attributes)) {
+                    if (row.hasOwnProperty(k)) row[k] = v;
+                }
+                updateDataFromRow(row);
+                success++;
+                log(`✓ ${imageFile}`, 'success');
+            } else {
+                log(`✗ ${imageFile}: ${result.error || '识别失败'}`, 'error');
+            }
+        } catch(e) {
+            log(`✗ ${imageFile}: ${e.message}`, 'error');
+        }
+    }
+
+    renderTable();
+    log(`识别完成: ${success}/${total}`, 'success');
+    setStatus('ready', '就绪');
+}
+
+function findImageFile(row) {
+    for (let key of Object.keys(row)) {
+        if (key.includes('参考图') && row[key] && row[key].trim()) {
+            return row[key].trim();
+        }
+    }
+    return null;
+}
+
+function getAIHeaders(headers, category) {
+    const classes = classifyColumns(headers, category);
+    return headers.filter(h => classes[h] === 'ai-cell' && !h.includes('标题') && !h.includes('短标题'));
+}
+
+function updateDataFromRow(row) {
+    if (!currentData || !currentSheet) return;
+    const rows = currentData.sheets[currentSheet].rows;
+    const idx = rows.findIndex(r => r._row === row._row);
+    if (idx >= 0) rows[idx] = row;
+}
+
+// 单元格更新
+function updateCell(sheetName, rowNum, header, value) {
+    if (!currentData) return;
+    const rows = currentData.sheets[sheetName].rows;
+    const row = rows.find(r => r._row === rowNum);
+    if (row) {
+        row[header] = value;
+    }
+}
+
+// 生成标题
+async function generateTitles() {
+    if (!currentData || !currentSheet) { alert('请先加载表格'); return; }
+    const sheet = currentData.sheets[currentSheet];
+    if (!sheet.rows.length) return;
+
+    setStatus('busy', '生成标题中...');
+
+    for (let row of sheet.rows) {
+        // 收集已有的AI属性
+        const attrs = {};
+        const aiHeaders = getAIHeaders(sheet.headers, currentSheet);
+        for (let h of aiHeaders) {
+            if (row[h]) attrs[h] = row[h];
+        }
+        const season = row['适用季节'] || '夏季';
+
+        try {
+            let resp = await fetch('/api/generate-title', {
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ category: currentSheet, attributes: attrs, season: season })
+            });
+            let result = await resp.json();
+            if (result.ok && result.title) {
+                for (let key of Object.keys(row)) {
+                    if (key.includes('商品标题')) row[key] = result.title;
+                    if (key.includes('短标题')) row[key] = result.short_title || '';
+                }
+                updateDataFromRow(row);
+                log(`标题已生成: ${result.title}`, 'success');
+            }
+        } catch(e) {
+            log(`标题生成失败: ${e.message}`, 'error');
+        }
+    }
+
+    renderTable();
+    setStatus('ready', '就绪');
+}
+
+// 保存
+async function saveExcel() {
+    if (!currentData) { alert('请先加载表格'); return; }
+    setStatus('busy', '保存中...');
+    try {
+        await fetch('/api/save-excel', {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ sheets: currentData.sheets })
+        });
+        log('已保存到 Excel', 'success');
+    } catch(e) {
+        log('保存失败: '+e.message, 'error');
+    }
+    setStatus('ready', '就绪');
+}
+
+// 导出
+function exportExcel() {
+    window.open('/api/export-excel', '_blank');
+}
+
+// 自动上架
+async function startAutoUpload() {
+    alert('浏览器自动化上架功能开发中，敬请期待');
+}
+
+// 状态
+function setStatus(state, text) {
+    const dot = document.getElementById('statusDot');
+    dot.className = 'status-dot ' + (state === 'busy' ? 'busy' : 'ready');
+    document.getElementById('statusText').textContent = text;
+}
+
+// 日志
+function log(msg, type) {
+    const panel = document.getElementById('logPanel');
+    panel.style.display = 'block';
+    const list = document.getElementById('logList');
+    const time = new Date().toLocaleTimeString();
+    list.innerHTML += `<div class="log-item"><span class="log-time">${time}</span><span class="log-${type}">${msg}</span></div>`;
+    list.scrollTop = list.scrollHeight;
+}
+</script>
+</body>
+</html>

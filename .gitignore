@@ -4,4 +4,4 @@ __pycache__/
 _title_check.txt
 _st_check.txt
 *.tmp
-~
+~$*
