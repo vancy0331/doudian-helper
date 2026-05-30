@@ -5,552 +5,390 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>抖店上架助手</title>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: "Microsoft YaHei","微软雅黑",sans-serif; background:#f0f2f5; color:#333; }
-.header { background:linear-gradient(135deg,#ff4d4f,#ff7875); color:#fff; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; }
-.header h1 { font-size:20px; }
-.header .subtitle { font-size:12px; opacity:.85; }
-.main { display:grid; grid-template-columns:280px 1fr; gap:16px; padding:16px; height:calc(100vh - 64px); }
-.panel { background:#fff; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); overflow:hidden; display:flex; flex-direction:column; }
-.panel-title { font-size:14px; font-weight:bold; padding:12px 16px; border-bottom:1px solid #f0f0f0; background:#fafafa; }
-.panel-body { flex:1; overflow:auto; padding:16px; }
-.btn { display:inline-block; padding:8px 20px; border:none; border-radius:6px; font-size:14px; cursor:pointer; transition:.2s; }
-.btn-primary { background:#ff4d4f; color:#fff; }
-.btn-primary:hover { background:#ff7875; }
-.btn-default { background:#fff; color:#333; border:1px solid #d9d9d9; }
-.btn-default:hover { border-color:#ff4d4f; color:#ff4d4f; }
-.btn-success { background:#52c41a; color:#fff; }
-.btn-success:hover { background:#73d13d; }
-.btn:disabled { opacity:.5; cursor:not-allowed; }
-.upload-zone { border:2px dashed #d9d9d9; border-radius:8px; padding:24px; text-align:center; cursor:pointer; transition:.2s; margin-bottom:12px; }
-.upload-zone:hover { border-color:#ff4d4f; }
-.upload-zone.dragover { border-color:#ff4d4f; background:#fff2f0; }
-.upload-zone p { color:#999; font-size:13px; }
-.image-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:8px; margin-top:12px; }
-.image-item { aspect-ratio:1; border-radius:6px; overflow:hidden; border:2px solid transparent; cursor:pointer; position:relative; }
-.image-item img { width:100%; height:100%; object-fit:cover; }
-.image-item:hover { border-color:#ff4d4f; }
-.image-item .del-btn { position:absolute; top:4px; right:4px; width:20px; height:20px; background:rgba(0,0,0,.5); color:#fff; border:none; border-radius:50%; cursor:pointer; font-size:12px; display:none; }
-.image-item:hover .del-btn { display:block; }
-.sheet-tabs { display:flex; gap:0; border-bottom:2px solid #f0f0f0; margin-bottom:12px; flex-wrap:wrap; }
-.sheet-tab { padding:8px 16px; cursor:pointer; font-size:13px; border-bottom:2px solid transparent; margin-bottom:-2px; transition:.2s; white-space:nowrap; }
-.sheet-tab.active { color:#ff4d4f; border-bottom-color:#ff4d4f; font-weight:bold; }
-.table-wrap { overflow:auto; flex:1; }
-.table-wrap table { border-collapse:collapse; font-size:12px; min-width:100%; }
-.table-wrap th { background:#fafafa; padding:6px 8px; border:1px solid #e8e8e8; font-weight:bold; white-space:nowrap; position:sticky; top:0; z-index:1; }
-.table-wrap td { padding:4px 6px; border:1px solid #e8e8e8; min-width:80px; }
-.table-wrap td.ai-cell { background:#e8f4fd; }
-.table-wrap td.manual-cell { background:#fffbe6; }
-.table-wrap td.fixed-cell { background:#f0fdf0; }
-.table-wrap td[contenteditable="true"] { cursor:text; outline:2px solid transparent; }
-.table-wrap td[contenteditable="true"]:focus { outline-color:#ff4d4f; background:#fff; }
-.row-num { color:#999; font-size:11px; text-align:center; min-width:40px !important; }
-.log-list { font-size:12px; max-height:300px; overflow:auto; }
-.log-item { padding:6px 8px; border-bottom:1px solid #f5f5f5; display:flex; gap:8px; }
-.log-time { color:#999; white-space:nowrap; }
-.log-success { color:#52c41a; }
-.log-error { color:#ff4d4f; }
-.log-info { color:#1890ff; }
-.progress-bar { height:6px; background:#f0f0f0; border-radius:3px; margin:8px 0; overflow:hidden; }
-.progress-inner { height:100%; background:#ff4d4f; border-radius:3px; transition:.3s; width:0%; }
-.empty-state { text-align:center; padding:60px 20px; color:#999; }
-.empty-state .icon { font-size:48px; margin-bottom:16px; }
-.action-bar { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
-.status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
-.status-dot.ready { background:#52c41a; }
-.status-dot.busy { background:#faad14; animation:pulse 1s infinite; }
-@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.3;} }
-select.dropdown-edit { width:100%; border:none; background:transparent; font-size:12px; padding:2px; }
+:root{--red:#e74c3c;--blue:#3498db;--green:#27ae60;--bg:#f8f9fa;--card:#fff;--border:#e9ecef;--text:#2c3e50;--muted:#95a5a6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:1100px;margin:0 auto;padding:32px 20px}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px}
+.logo{font-size:24px;font-weight:700}.logo span{color:var(--red)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:6px}.dot.busy{background:#f39c12;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);margin-bottom:24px;overflow:hidden}
+.card-hd{padding:20px 28px;border-bottom:1px solid var(--border);font-size:16px;font-weight:600;display:flex;align-items:center;gap:12px}
+.card-bd{padding:24px 28px}
+.btn{padding:10px 22px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+.btn:active{transform:scale(.97)}.btn:disabled{opacity:.35;pointer-events:none}
+.btn-p{background:var(--red);color:#fff}.btn-p:hover{background:#c0392b}
+.btn-s{background:var(--green);color:#fff}.btn-s:hover{background:#1e8449}
+.btn-o{background:var(--card);color:var(--text);border:1.5px solid var(--border)}.btn-o:hover{border-color:var(--text)}
+.btn-sm{padding:5px 12px;font-size:11px;border-radius:5px}
+.btn-group,.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+.tabs{display:flex;gap:4px;background:#f1f3f5;padding:4px;border-radius:8px;overflow-x:auto}
+.tab{padding:6px 16px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;color:var(--muted)}
+.tab.active{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+
+.tbl-wrap{overflow:auto;max-height:480px;border-radius:10px;border:1px solid var(--border)}
+.tbl-wrap table{border-collapse:collapse;font-size:11px;min-width:100%}
+.tbl-wrap th{background:#f8f9fa;padding:8px 10px;text-align:left;font-weight:600;font-size:10px;color:var(--muted);border-bottom:2px solid var(--border);position:sticky;top:0;z-index:2;white-space:nowrap}
+.tbl-wrap td{padding:6px 8px;border-bottom:1px solid #f1f3f5;vertical-align:middle;min-width:60px}
+.tbl-wrap td img{width:50px;height:50px;object-fit:cover;border-radius:6px;border:1px solid #eee}
+.tbl-wrap td.img-cell{min-width:100px}
+.tbl-wrap td.img-cell.dragover{background:#fdf2f2!important;outline:2px dashed var(--red)}
+.tbl-wrap td[contenteditable=true]{outline:1px solid transparent;cursor:text}
+.tbl-wrap td[contenteditable=true]:focus{outline-color:var(--red);background:#fff!important}
+.c-ai{background:#ebf5fb!important}.c-man{background:#fef9e7!important}.c-fix{background:#eafaf1!important}
+.c-empty{background:#ffeaea!important}.c-empty::after{content:' 未填';color:var(--red);font-size:10px}
+
+.img-zone{border:2px dashed #dee2e6;border-radius:10px;padding:12px 16px;min-height:52px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;transition:.2s;margin-bottom:16px}
+.img-zone.dragover{border-color:var(--red);background:#fdf2f2}
+.img-zone .img-thumb{width:48px;height:48px;object-fit:cover;border-radius:6px;border:2px solid transparent;cursor:grab}
+.img-zone .img-thumb:hover{border-color:var(--red)}
+
+.output-list,.pub-list{display:flex;flex-direction:column;gap:6px}
+.o-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border:1px solid var(--border);border-radius:10px;font-size:13px}
+.o-item:hover{border-color:var(--blue)}.o-item.sel{border-color:var(--red);background:#fef5f5}
+.o-item .o-info{display:flex;align-items:center;gap:10px}
+.o-item .o-name{font-weight:600}.o-item .o-meta{font-size:11px;color:var(--muted)}
+
+.progress-bar{height:6px;background:#f1f3f5;border-radius:3px;overflow:hidden}.progress-fill{height:100%;background:var(--red);border-radius:3px;transition:width .4s}
+.progress-info{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px}
+
+.log{background:#1e1e1e;color:#d4d4d4;border-radius:10px;padding:14px 18px;font-family:"Consolas",monospace;font-size:11px;max-height:200px;overflow:auto;line-height:1.7}
+.log .ok{color:#6a9955}.log .err{color:#f44747}.log .warn{color:#dcdcaa}.log .info{color:#9cdcfe}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600}
+.tag-ok{background:#d5f5e3;color:#1e8449}.tag-warn{background:#fef9e7;color:#b7950b}.tag-err{background:#fadbd8;color:#c0392b}
+
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(2px)}
+.modal{background:#fff;border-radius:18px;padding:36px;max-width:420px;width:90%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.15)}
+.modal h3{font-size:18px;margin-bottom:8px}.modal p{color:var(--muted);margin-bottom:16px;font-size:13px}
+.modal input{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:14px;text-align:center;outline:none}
+.modal input:focus{border-color:var(--red)}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
+<div class="container">
 
-<div class="header">
-  <div>
-    <h1>抖店上架助手 <span class="subtitle">v1.0</span></h1>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <span class="status-dot ready" id="statusDot"></span>
-    <span style="font-size:13px;" id="statusText">就绪</span>
-  </div>
+<div class="nav">
+  <div class="logo"><span>抖店</span>上架助手</div>
+  <div style="font-size:13px;color:var(--muted)"><span class="dot" id="dot"></span><span id="stText">就绪</span></div>
 </div>
 
-<div class="main">
-  <!-- 左侧面板 -->
-  <div style="display:flex;flex-direction:column;gap:16px;">
-    <!-- 上传区 -->
-    <div class="panel">
-      <div class="panel-title">📁 上传文件</div>
-      <div class="panel-body">
-        <div class="upload-zone" id="excelDrop">
-          <p style="font-size:24px;">📊</p>
-          <p>拖入或点击上传 Excel 表格</p>
-          <input type="file" id="excelInput" accept=".xlsx,.xls" hidden>
-        </div>
-        <div class="upload-zone" id="imageDrop">
-          <p style="font-size:24px;">🖼️</p>
-          <p>拖入或点击上传参考图</p>
-          <input type="file" id="imageInput" accept="image/*" multiple hidden>
-        </div>
-        <div class="image-grid" id="imageGrid"></div>
-        <div style="margin-top:8px;font-size:12px;color:#999;">
-          已上传: <span id="imageCount">0</span> 张
-        </div>
-      </div>
-    </div>
-
-    <!-- 操作区 -->
-    <div class="panel">
-      <div class="panel-title">⚡ 操作</div>
-      <div class="panel-body">
-        <div class="action-bar" style="flex-direction:column;">
-          <button class="btn btn-primary" onclick="recognizeAll()" style="width:100%;">
-            🔍 AI 识别全部未填写行
-          </button>
-          <button class="btn btn-primary" onclick="recognizeSelected()" style="width:100%;">
-            🔍 AI 识别当前行
-          </button>
-          <button class="btn btn-default" onclick="generateTitles()" style="width:100%;">
-            ✏️ 生成标题和短标题
-          </button>
-          <button class="btn btn-default" onclick="saveExcel()" style="width:100%;">
-            💾 保存到 Excel
-          </button>
-          <button class="btn btn-default" onclick="exportExcel()" style="width:100%;">
-            📥 下载 Excel
-          </button>
-          <button class="btn btn-success" onclick="startAutoUpload()" disabled id="btnAutoUpload" style="width:100%;">
-            🚀 自动上架（开发中）
-          </button>
-        </div>
-      </div>
-    </div>
+<!-- 01 -->
+<div class="card">
+  <div class="card-hd">01 上传 & 编辑
+    <span style="flex:1"></span>
+    <button class="btn btn-o btn-sm" onclick="resetAll()" id="btnReset" style="display:none">清除</button>
   </div>
-
-  <!-- 右侧表格区 -->
-  <div class="panel">
-    <div class="panel-title">📋 商品表格</div>
-    <div class="panel-body" style="display:flex;flex-direction:column;padding-top:8px;">
-      <div class="sheet-tabs" id="sheetTabs"></div>
-      <div class="table-wrap" id="tableWrap">
-        <div class="empty-state">
-          <div class="icon">📊</div>
-          <p>请先上传 Excel 表格</p>
-        </div>
-      </div>
+  <div class="card-bd">
+    <div class="toolbar" style="margin-bottom:12px">
+      <button class="btn btn-o" onclick="document.getElementById('fx').click()">📊 上传 Excel</button>
+      <input type="file" id="fx" accept=".xlsx" hidden onchange="upExcel(this.files[0])">
+      <button class="btn btn-o btn-sm" onclick="document.getElementById('fi').click()">🖼️ 选图片</button>
+      <input type="file" id="fi" accept="image/*" multiple hidden onchange="addImgs(this.files)">
+      <span id="upMsg" style="font-size:12px;color:var(--muted)">未上传</span>
+    </div>
+    <div class="img-zone" id="imgZ"
+         ondragover="event.preventDefault();this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="dropImgs(event)">
+      <span style="font-size:11px;color:var(--muted)">🖼️ 拖图片到此处，再拖到表格A列</span>
+    </div>
+    <div id="tblSec" class="hidden">
+      <div class="tabs" id="tabs"></div>
+      <div class="tbl-wrap" id="tbl"></div>
     </div>
   </div>
 </div>
 
-<!-- 日志面板 -->
-<div style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e8e8e8;max-height:150px;overflow:auto;display:none;" id="logPanel">
-  <div style="padding:6px 16px;background:#fafafa;border-bottom:1px solid #e8e8e8;display:flex;justify-content:space-between;align-items:center;">
-    <span style="font-size:13px;font-weight:bold;">📝 操作日志</span>
-    <button class="btn btn-default" style="font-size:12px;padding:2px 8px;" onclick="document.getElementById('logPanel').style.display='none'">✕</button>
+<!-- 02 -->
+<div class="card">
+  <div class="card-hd">02 AI 填写 & 输出</div>
+  <div class="card-bd">
+    <div class="btn-group" style="margin-bottom:12px">
+      <button class="btn btn-p" onclick="aiFill()" id="btnAi">🔍 AI 识别填写</button>
+      <button class="btn btn-o" onclick="checkAI()">✅ 检查完整性</button>
+      <button class="btn btn-s" onclick="showSave()" id="btnSave" disabled>💾 保存到输出区</button>
+    </div>
+    <div id="chkRes" style="font-size:12px;margin-bottom:16px"></div>
+    <div style="font-weight:600;font-size:14px;margin-bottom:8px">📦 已完成的表格</div>
+    <div class="output-list" id="outList"><div style="font-size:12px;color:var(--muted)">暂无</div></div>
   </div>
-  <div class="log-list" id="logList"></div>
+</div>
+
+<!-- 03 -->
+<div class="card">
+  <div class="card-hd">03 自动上架</div>
+  <div class="card-bd">
+    <div style="font-weight:600;font-size:14px;margin-bottom:8px">选择数据源</div>
+    <div class="toolbar" style="margin-bottom:12px">
+      <button class="btn btn-o btn-sm" onclick="document.getElementById('f3').click()">📁 上传表格</button>
+      <input type="file" id="f3" accept=".xlsx" hidden onchange="pubUpload(this.files[0])">
+      <span style="font-size:12px;color:var(--muted)">或从输出区选择:</span>
+    </div>
+    <div class="pub-list" id="pubSel"><div style="font-size:12px;color:var(--muted)">暂无</div></div>
+    <div id="pubMsg" style="font-size:12px;color:var(--muted);margin:10px 0"></div>
+    <div class="btn-group" style="margin-bottom:12px">
+      <button class="btn btn-p" onclick="startPub()" id="btnPub" disabled>🚀 开始自动上架</button>
+      <button class="btn btn-o" onclick="stopPub()" id="btnStop" disabled>⏸ 暂停</button>
+    </div>
+    <div id="progSec" class="hidden">
+      <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+      <div class="progress-info"><span id="progTxt">0/0</span><span id="progCur"></span></div>
+    </div>
+    <div class="log" id="log"><span class="info">就绪</span></div>
+  </div>
+</div>
+
+</div>
+
+<!-- 保存弹窗 -->
+<div class="modal-bg hidden" id="svModal">
+  <div class="modal"><h3>💾 保存表格</h3><p>输入表格名称</p>
+    <input id="svName" placeholder="例如: 2026夏连衣裙-5款" autofocus>
+    <div class="btn-group" style="justify-content:center;margin-top:14px">
+      <button class="btn btn-s" onclick="doSave()">确认</button>
+      <button class="btn btn-o" onclick="document.getElementById('svModal').classList.add('hidden')">取消</button>
+    </div>
+  </div>
 </div>
 
 <script>
-// 全局状态
-let currentData = null;
-let currentSheet = null;
-let config = null;
-let uploadedImages = [];
+let TD=null, CS=null, CFG=null;          // tableData, currentSheet, config
+let PD=null, PQ=[], PI=0, PR=false;      // publish
+let imgs=[];                               // [{name,blob,url}]
 
-// 初始化
-document.addEventListener('DOMContentLoaded', async () => {
-    setupUpload('excelDrop', 'excelInput', handleExcel);
-    setupUpload('imageDrop', 'imageInput', handleImages);
-    try {
-        let resp = await fetch('/api/config');
-        config = await resp.json();
-        log('配置加载完成', 'success');
-    } catch(e) {
-        log('配置加载失败: '+e.message, 'error');
-    }
-});
+(async()=>{try{CFG=await(await fetch('/api/config')).json()}catch(e){}loadOut();loadPub()})();
 
-function setupUpload(dropId, inputId, handler) {
-    const drop = document.getElementById(dropId);
-    const input = document.getElementById(inputId);
+// ===== 图片 =====
+function addImgs(files){for(let f of files){if(!f.type.startsWith('image/'))continue;imgs.push({name:f.name,blob:f,url:URL.createObjectURL(f)})}renderImgs()}
+function dropImgs(e){e.preventDefault();document.getElementById('imgZ').classList.remove('dragover');if(e.dataTransfer.files.length)addImgs(e.dataTransfer.files)}
+function renderImgs(){
+  let z=document.getElementById('imgZ');
+  z.innerHTML=imgs.map((m,i)=>`<img src="${m.url}" class="img-thumb" draggable="true" ondragstart="dragImg(${i})" title="${m.name}" oncontextmenu="event.preventDefault();imgs.splice(${i},1);renderImgs()">`).join('');
+  if(!imgs.length)z.innerHTML='<span style="font-size:11px;color:var(--muted)">🖼️ 拖图片到此处，再拖到表格A列</span>';
+}
+let dragI=-1;function dragImg(i){dragI=i}
 
-    drop.addEventListener('click', () => input.click());
-    drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
-    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
-    drop.addEventListener('drop', e => {
-        e.preventDefault();
-        drop.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length) handler(files);
+// ===== 上传 =====
+async function upExcel(file){
+  if(!file)return;
+  let fd=new FormData();fd.append('file',file);
+  document.getElementById('upMsg').innerHTML='<span class="tag tag-warn">解析中...</span>';
+  setSt('busy','上传中');
+  try{
+    let resp=await fetch('/api/upload-excel',{method:'POST',body:fd});
+    if(!resp.ok){document.getElementById('upMsg').innerHTML='<span class="tag tag-err">失败 HTTP '+resp.status+'</span>';setSt('ready','错误');return}
+    let r=await resp.json();
+    setSt('ready','就绪');
+    let n=0;for(let s of r.sheetNames)n+=r.sheets[s]?.rows?.length||0;
+    TD=r;document.getElementById('upMsg').innerHTML=`<span class="tag tag-ok">✓</span> ${r.sheetNames.length}类目 ${n}件`;
+    document.getElementById('btnReset').style.display='';
+    if(r.sheetNames.length){CS=r.sheetNames[0];renderAll()}
+    addL('表格已加载: '+n+'件','ok');
+  }catch(e){document.getElementById('upMsg').innerHTML='<span class="tag tag-err">网络错误</span>';setSt('ready','错误');alert('上传失败: '+e.message)}
+}
+
+function resetAll(){if(!confirm('清除当前表格?'))return;TD=null;CS=null;document.getElementById('tblSec').classList.add('hidden');document.getElementById('btnReset').style.display='none';document.getElementById('upMsg').textContent='未上传';document.getElementById('tbl').innerHTML='';document.getElementById('tabs').innerHTML='';document.getElementById('chkRes').innerHTML='';document.getElementById('btnSave').disabled=true}
+
+function renderAll(){
+  document.getElementById('tblSec').classList.remove('hidden');
+  document.getElementById('tabs').innerHTML=TD.sheetNames.map(s=>`<div class="tab ${s===CS?'active':''}" onclick="switchS('${s}')">${s}</div>`).join('');
+  renderTbl();
+}
+function switchS(s){CS=s;renderAll()}
+
+function renderTbl(){
+  if(!TD||!CS)return;
+  let sh=TD.sheets[CS];
+  let h='<table><thead><tr>';sh.headers.forEach(hd=>h+=`<th>${hd}</th>`);h+='</tr></thead><tbody>';
+  sh.rows.forEach((row,ri)=>{
+    h+='<tr>';
+    sh.headers.forEach((hd,ci)=>{
+      let v=row[hd]||'',cls=cCls(hd);
+      if(!v&&cls==='c-ai')cls+=' c-empty';
+      let c=v,isImg=ci===0||hd.includes('参考图');
+      if(isImg&&row._images&&row._images.length){
+        c='';row._images.forEach(im=>{c+=`<img src="${im}" style="width:56px;height:56px;object-fit:cover;border-radius:6px;margin:2px" onerror="this.style.display='none'">`});
+        if(!c)c='[图片加载中]';
+      }
+      let ed=isImg?'':'contenteditable="true" spellcheck="false"';
+      h+=`<td class="${cls}${isImg?' img-cell':''}" ${ed} data-s="${CS}" data-r="${ri}" data-h="${hd.replace(/"/g,'&quot;')}"
+        ${isImg?`ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="cellDrop(event,'${CS}',${ri})"`:''}>${c}</td>`;
     });
-    input.addEventListener('change', e => {
-        if (e.target.files.length) handler(e.target.files);
-    });
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('tbl').innerHTML=h;
 }
 
-// 处理 Excel
-async function handleExcel(files) {
-    const formData = new FormData();
-    formData.append('file', files[0]);
-    setStatus('busy', '解析中...');
-    try {
-        let resp = await fetch('/api/upload-excel', { method:'POST', body:formData });
-        currentData = await resp.json();
-        renderSheetTabs();
-        if (currentData.sheetNames.length) {
-            switchSheet(currentData.sheetNames[0]);
-        }
-        log(`Excel 已加载: ${currentData.sheetNames.length} 个Sheet`, 'success');
-        setStatus('ready', '就绪');
-    } catch(e) {
-        log('Excel 加载失败: '+e.message, 'error');
-        setStatus('ready', '错误');
+async function cellDrop(e,sn,ri){
+  e.preventDefault();e.target.classList.remove('dragover');
+  syncEdit();
+  if(!TD.sheets[sn].rows[ri]._images)TD.sheets[sn].rows[ri]._images=[];
+
+  async function addImg(blob,name){
+    let fd=new FormData();fd.append('file',blob,name);
+    let resp=await fetch('/api/upload-image',{method:'POST',body:fd});
+    let data=await resp.json();
+    addL(`图片上传: ${data.url||'失败'}`, data.url?'ok':'err');
+    if(data.url){
+      if(!TD.sheets[sn].rows[ri]._images)TD.sheets[sn].rows[ri]._images=[];
+      TD.sheets[sn].rows[ri]._images.push(data.url);
+      TD.sheets[sn].rows[ri]._row = TD.sheets[sn].rows[ri]._row || (ri+5);
+      delete TD.sheets[sn].rows[ri]._placeholder;
+      renderTbl();
     }
-}
+  }
 
-// 处理图片上传
-async function handleImages(files) {
-    for (let f of files) {
-        const formData = new FormData();
-        formData.append('file', f);
-        try {
-            await fetch('/api/upload-image', { method:'POST', body:formData });
-            uploadedImages.push(f.name);
-            log(`图片已上传: ${f.name}`, 'success');
-        } catch(e) {
-            log(`图片上传失败: ${f.name}`, 'error');
-        }
+  if(dragI>=0&&dragI<imgs.length){
+    let m=imgs[dragI];dragI=-1;
+    await addImg(m.blob,m.name);
+  }else if(e.dataTransfer.files.length){
+    for(let f of e.dataTransfer.files){
+      if(!f.type.startsWith('image/'))continue;
+      await addImg(f,f.name);
     }
-    document.getElementById('imageCount').textContent = uploadedImages.length;
-    renderImageGrid();
+  }
 }
 
-function renderImageGrid() {
-    const grid = document.getElementById('imageGrid');
-    grid.innerHTML = uploadedImages.map(f => `
-        <div class="image-item" onclick="navigator.clipboard.writeText('${f}');log('已复制文件名: ${f}', 'info')">
-            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:#f5f5f5;font-size:32px;">🖼️</div>
-            <div class="del-btn" onclick="event.stopPropagation();removeImage('${f}')">✕</div>
-            <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${f}</div>
-        </div>
-    `).join('');
+function cCls(h){h=h.replace(/\n.*/,'').trim();
+  let m=['参考图','款号','SKU','售价','发货模式','发货时间','备注'];
+  let a=['商品标题','短标题','领型','袖长','裙长','裙型','裤长','裤型','版型','风格','颜色','材质','图案','腰型','衣长','厚薄','衣门襟','适用季节','适用场景','组合件数','款式','适用年龄','上装领型','上装袖长','下装类型','下装长度','面料'];
+  let f=['尺码大小','适用人群','品牌','发货地','运费险','七天无理由'];
+  for(let k of m)if(h.includes(k))return'c-man';
+  for(let k of a)if(h.includes(k))return'c-ai';
+  for(let k of f)if(h.includes(k))return'c-fix';
+  return'c-man';
 }
 
-function removeImage(filename) {
-    uploadedImages = uploadedImages.filter(f => f !== filename);
-    document.getElementById('imageCount').textContent = uploadedImages.length;
-    renderImageGrid();
-}
+function aiHdrs(){if(!TD||!CS)return[];return TD.sheets[CS].headers.filter(h=>cCls(h)==='c-ai'&&!h.includes('商品标题')&&!h.includes('短标题'))}
 
-// Sheet 切换
-function renderSheetTabs() {
-    if (!currentData) return;
-    const tabs = document.getElementById('sheetTabs');
-    tabs.innerHTML = currentData.sheetNames.map(sn => `
-        <div class="sheet-tab ${sn === currentSheet ? 'active' : ''}" onclick="switchSheet('${sn}')">${sn}</div>
-    `).join('');
-}
+// ===== AI =====
+async function aiFill(){
+  if(!TD){alert('请先上传表格');return}
+  // 遍历所有Sheet
+  let total=0,ok=0;
+  let btn=document.getElementById('btnAi');btn.disabled=true;btn.textContent='⏳ 识别中...';setSt('busy','AI识别');
 
-function switchSheet(sn) {
-    currentSheet = sn;
-    renderSheetTabs();
-    renderTable();
-}
-
-// 渲染表格
-function renderTable() {
-    if (!currentData || !currentSheet) return;
-    const sheet = currentData.sheets[currentSheet];
-    if (!sheet) return;
-
-    const { headers, rows } = sheet;
-
-    // 分类列: 图片/人工/AI/固定
-    const colClasses = classifyColumns(headers, currentSheet);
-
-    let html = '<table><thead><tr><th class="row-num">#</th>';
-    headers.forEach(h => {
-        html += `<th>${h}</th>`;
-    });
-    html += '</tr></thead><tbody>';
-
-    rows.forEach((row, idx) => {
-        html += '<tr>';
-        html += `<td class="row-num">${idx + 1}</td>`;
-        headers.forEach(h => {
-            const val = row[h] || '';
-            const cls = colClasses[h] || '';
-            const cellId = `cell_${currentSheet}_${row._row}_${h.replace(/[^a-zA-Z0-9一-龥]/g,'')}`;
-
-            // 检查是否有下拉选项
-            let dropdownHtml = '';
-            if (cls === 'ai-cell' && config) {
-                const catOpts = config.options[currentSheet] || {};
-                const commonOpts = config.options['所有类目'] || {};
-                const fieldOpts = catOpts[h] || commonOpts[h] || {};
-                const optsStr = fieldOpts.options || fieldOpts.fixed || '';
-                if (optsStr && optsStr.includes('/')) {
-                    const opts = optsStr.split('/').filter(o => o.trim());
-                    if (opts.length > 1 && opts.length <= 30) {
-                        dropdownHtml = `<select class="dropdown-edit" onchange="updateCell('${currentSheet}',${row._row},'${h}',this.value)" data-original="${val}">`;
-                        dropdownHtml += `<option value="${val}" selected>${val || '请选择'}</option>`;
-                        opts.forEach(o => {
-                            if (o.trim() !== val) dropdownHtml += `<option value="${o.trim()}">${o.trim()}</option>`;
-                        });
-                        dropdownHtml += '</select>';
-                    }
-                }
-            }
-
-            html += `<td class="${cls}" id="${cellId}">`;
-            if (dropdownHtml) {
-                html += dropdownHtml;
-            } else {
-                html += `<span>${val}</span>`;
-            }
-            html += '</td>';
-        });
-        html += '</tr>';
-    });
-
-    html += '</tbody></table>';
-    document.getElementById('tableWrap').innerHTML = html;
-}
-
-function classifyColumns(headers, category) {
-    if (!config || !config.fields) return {};
-    const catFields = config.fields[category] || [];
-    const commonFields = config.fields['所有类目'] || [];
-    const allFields = [...commonFields, ...catFields];
-
-    // 简化的列分类
-    const classes = {};
-    const manualHeaders = ['参考图', '款号', 'SKU', '售价', '发货模式', '发货时间', '备注'];
-    const aiHeaders = ['商品标题', '短标题', '领型', '袖长', '裙长', '裙型', '裤长', '裤型',
-                       '版型', '风格', '颜色', '材质', '图案', '腰型', '衣长', '厚薄', '衣门襟',
-                       '适用季节', '适用场景', '组合件数', '款式', '适用年龄',
-                       '上装领型', '上装袖长', '下装类型', '下装长度'];
-    const fixedHeaders = ['尺码大小', '适用人群', '规格尺码', '品牌', '面料材质', '预售时间'];
-
-    headers.forEach(h => {
-        for (let mh of manualHeaders) {
-            if (h.includes(mh)) { classes[h] = 'manual-cell'; return; }
+  for(let sn of TD.sheetNames){
+    CS=sn;renderAll();
+    let sh=TD.sheets[CS],ah=aiHdrs();
+    if(!ah.length)continue;
+    // 有嵌入图或A列有图片文件名的行
+    function hasRefImg(row){if(row._images&&row._images.length)return true;for(let k of Object.keys(row)){if(k.includes('参考图')&&row[k]&&row[k].includes('.'))return true}return false}
+    let needFill=sh.rows.filter(r=>hasRefImg(r)&&ah.some(h=>!r[h]));
+    if(!needFill.length)continue;
+    addL(`${sn}: ${needFill.length}行待识别`,'info');
+    for(let row of needFill){
+      total++;
+      try{
+        let skuVals=[];for(let k of Object.keys(row)){if(k.includes('SKU')&&row[k])skuVals.push(row[k])}
+        // 获取图片路径：优先嵌入图，否则从A列文件名找
+        let imgPath=row._images&&row._images.length?row._images[0]:'';
+        if(!imgPath){for(let k of Object.keys(row)){if(k.includes('参考图')&&row[k]&&row[k].includes('.')){imgPath=row[k];break}}}
+        let r=await(await fetch('/api/ai-recognize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image_path:imgPath,category:CS,fields:ah,sku_hint:skuVals.join(' ')})})).json();
+        if(r.ok&&r.attributes){
+          for(let[k,v]of Object.entries(r.attributes))if(row.hasOwnProperty(k))row[k]=v;
+          if(r.title){for(let k of Object.keys(row)){if(k.includes('商品标题'))row[k]=r.title;if(k.includes('短标题'))row[k]=r.short_title||''}}
+          ok++;
         }
-        for (let ah of aiHeaders) {
-            if (h.includes(ah)) { classes[h] = 'ai-cell'; return; }
-        }
-        for (let fh of fixedHeaders) {
-            if (h.includes(fh)) { classes[h] = 'fixed-cell'; return; }
-        }
-        // 默认
-        if (h.includes('(人工)') || h.includes('SKU') || h.includes('售价')) classes[h] = 'manual-cell';
-        else if (h.includes('(AI') || h.includes('(固定')) classes[h] = 'fixed-cell';
-        else classes[h] = 'ai-cell';
-    });
-    return classes;
-}
-
-// AI 识别当前行
-async function recognizeSelected() {
-    if (!currentData || !currentSheet) { alert('请先加载表格'); return; }
-    const sheet = currentData.sheets[currentSheet];
-    if (!sheet.rows.length) { alert('当前Sheet没有数据'); return; }
-
-    setStatus('busy', 'AI识别中...');
-    const row = sheet.rows[0]; // 识别第一行
-    const imageFile = findImageFile(row);
-    if (!imageFile) { alert('未找到参考图，请先在A列填写图片文件名'); setStatus('ready','就绪'); return; }
-
-    const aiHeaders = getAIHeaders(sheet.headers, currentSheet);
-
-    try {
-        let resp = await fetch('/api/ai-recognize', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({
-                image: imageFile,
-                category: currentSheet,
-                fields: aiHeaders
-            })
-        });
-        let result = await resp.json();
-        if (result.ok && result.attributes) {
-            // 更新行数据
-            for (let [k, v] of Object.entries(result.attributes)) {
-                if (row.hasOwnProperty(k)) {
-                    row[k] = v;
-                }
-            }
-            // 更新当前数据
-            updateDataFromRow(row);
-            renderTable();
-            log(`AI识别完成: ${imageFile}`, 'success');
-        } else {
-            log(`AI识别失败: ${result.error || result.raw}`, 'error');
-        }
-    } catch(e) {
-        log('AI识别出错: '+e.message, 'error');
+      }catch(e){addL(`识别错误: ${e.message}`,'err')}
     }
-    setStatus('ready', '就绪');
+  }
+  CS=TD.sheetNames[0];renderAll();
+  btn.disabled=false;btn.textContent='🔍 AI 识别填写';setSt('ready','就绪');
+  addL(`完成: ${ok}/${total}`,ok===total?'ok':'warn');
+  document.getElementById('btnSave').disabled=false;
 }
 
-// AI 识别全部
-async function recognizeAll() {
-    if (!currentData || !currentSheet) { alert('请先加载表格'); return; }
-    const sheet = currentData.sheets[currentSheet];
-    if (!sheet.rows.length) return;
-
-    setStatus('busy', 'AI识别中...');
-    const aiHeaders = getAIHeaders(sheet.headers, currentSheet);
-    let total = 0, success = 0;
-
-    for (let row of sheet.rows) {
-        const imageFile = findImageFile(row);
-        if (!imageFile) continue;
-        total++;
-        try {
-            let resp = await fetch('/api/ai-recognize', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ image: imageFile, category: currentSheet, fields: aiHeaders })
-            });
-            let result = await resp.json();
-            if (result.ok && result.attributes) {
-                for (let [k, v] of Object.entries(result.attributes)) {
-                    if (row.hasOwnProperty(k)) row[k] = v;
-                }
-                updateDataFromRow(row);
-                success++;
-                log(`✓ ${imageFile}`, 'success');
-            } else {
-                log(`✗ ${imageFile}: ${result.error || '识别失败'}`, 'error');
-            }
-        } catch(e) {
-            log(`✗ ${imageFile}: ${e.message}`, 'error');
-        }
-    }
-
-    renderTable();
-    log(`识别完成: ${success}/${total}`, 'success');
-    setStatus('ready', '就绪');
+function checkAI(silent){
+  if(!TD||!CS)return;
+  let sh=TD.sheets[CS],ah=aiHdrs(),issues=[],t=0,f=0;
+  sh.rows.forEach((row,i)=>ah.forEach(h=>{t++;if(row[h]&&row[h].trim())f++;else issues.push(`第${i+1}行 ${h}`)}));
+  let pct=t?Math.round(f/t*100):0,d=document.getElementById('chkRes');
+  if(issues.length){d.innerHTML=`<span class="tag tag-err">${issues.length}项未填</span> 完整度 ${pct}%`;
+    if(!silent)d.innerHTML+=`<div style="margin-top:4px;font-size:11px;max-height:80px;overflow:auto">${issues.slice(0,12).map(s=>'<div style="color:#e74c3c">⚠ '+s+'</div>').join('')}${issues.length>12?'<div>...等'+issues.length+'项</div>':''}</div>`}
+  else{d.innerHTML='<span class="tag tag-ok">✓ AI区域填写完整</span>';document.getElementById('btnSave').disabled=false}
+  return issues.length===0;
 }
 
-function findImageFile(row) {
-    for (let key of Object.keys(row)) {
-        if (key.includes('参考图') && row[key] && row[key].trim()) {
-            return row[key].trim();
-        }
-    }
-    return null;
+// ===== 保存 =====
+function showSave(){
+  if(!TD){alert('请先上传表格');return}
+  syncEdit();
+  let incomplete=!checkAI(true);
+  if(incomplete){
+    if(!confirm('AI字段还有未填项，确定要保存吗？\n（可保存后手动编辑补充）'))return;
+  }
+  document.getElementById('svModal').classList.remove('hidden');
+  document.getElementById('svName').focus();
+}
+function syncEdit(){if(!TD||!CS)return;let sh=TD.sheets[CS];document.querySelectorAll('#tbl td[contenteditable]').forEach(td=>{let r=parseInt(td.dataset.r),h=td.dataset.h;if(r<sh.rows.length)sh.rows[r][h]=td.textContent.trim()})}
+async function doSave(){
+  let nm=document.getElementById('svName').value.trim();
+  if(!nm){alert('请输入名称');return}
+  document.getElementById('svModal').classList.add('hidden');syncEdit();
+  let r=await(await fetch('/api/save-output',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:nm,sheets:TD.sheets})})).json();
+  if(r.ok){addL('已保存: '+r.name,'ok');loadOut();loadPub()}else alert(r.error);
+}
+async function loadOut(){
+  try{let r=await(await fetch('/api/output-tables')).json();
+    let d=document.getElementById('outList');
+    if(!r.tables.length){d.innerHTML='<div style="font-size:12px;color:var(--muted)">暂无</div>';return}
+    d.innerHTML=r.tables.map(t=>`<div class="o-item"><div class="o-info">📊<div><div class="o-name">${t.name}</div><div class="o-meta">${t.size}</div></div></div><div style="display:flex;gap:6px"><button class="btn btn-o btn-sm" onclick="dlOut('${t.name}')">下载</button><button class="btn btn-o btn-sm" onclick="delOut('${t.name}')">删除</button></div></div>`).join('');
+  }catch(e){}
+}
+function dlOut(n){window.open('/api/download-output/'+encodeURIComponent(n),'_blank')}
+async function delOut(n){if(!confirm('删除 '+n+'?'))return;await fetch('/api/delete-output',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})});loadOut();loadPub()}
+
+// ===== 上架 =====
+async function loadPub(){
+  try{let r=await(await fetch('/api/output-tables')).json();let d=document.getElementById('pubSel');
+    if(!r.tables.length){d.innerHTML='<div style="font-size:12px;color:var(--muted)">暂无</div>';return}
+    d.innerHTML=r.tables.map(t=>`<div class="o-item" onclick="selPub('${t.name}',this)"><div class="o-info"><input type="radio" name="pb" style="width:16px;height:16px"><div class="o-name">${t.name}</div></div><div class="o-meta">${t.size}</div></div>`).join('');
+  }catch(e){}
+}
+function selPub(n,el){document.querySelectorAll('#pubSel .o-item').forEach(e=>e.classList.remove('sel'));el.classList.add('sel');PD=n;document.getElementById('pubMsg').innerHTML=`<span class="tag tag-ok">✓</span> ${n}`;document.getElementById('btnPub').disabled=false}
+async function pubUpload(file){
+  if(!file)return;let fd=new FormData();fd.append('file',file);
+  let r=await(await fetch('/api/upload-excel',{method:'POST',body:fd})).json();
+  PD='_up_';window._pd=r;
+  document.getElementById('pubMsg').innerHTML=`<span class="tag tag-ok">✓</span> ${file.name}`;
+  document.getElementById('btnPub').disabled=false;
 }
 
-function getAIHeaders(headers, category) {
-    const classes = classifyColumns(headers, category);
-    return headers.filter(h => classes[h] === 'ai-cell' && !h.includes('标题') && !h.includes('短标题'));
+function useCurrent(){if(!TD){alert("请先上传表格");return}syncEdit();window._curData=JSON.parse(JSON.stringify(TD));PD="_cur_";document.getElementById("pubMsg").innerHTML="<span class=\"tag tag-ok\">✓</span> 使用当前表格";document.getElementById("btnPub").disabled=false}
+async function startPub(){
+  if(!PD){alert("请先选择表格");return}
+  let r;
+  if(PD==="_cur_"){r=window._curData;if(!r||!r.sheetNames){alert("表格数据丢失，请重新上传");return}}
+  else if(PD==="_up_"){r=window._pd;if(!r){alert("数据丢失");return}}
+  else{let resp=await fetch('/api/download-output/'+encodeURIComponent(PD));if(!resp.ok){alert('加载失败');return}
+    let fd=new FormData();fd.append('file',await resp.blob(),PD);
+    r=await(await fetch('/api/upload-excel',{method:'POST',body:fd})).json()}
+  PR=true;PI=0;PQ=[];
+  for(let sn of r.sheetNames){let sh=r.sheets[sn];sh.rows.forEach((row,i)=>{if(!row._placeholder){let hasImg=row._images&&row._images.length;if(!hasImg){for(let k of Object.keys(row)){if(k.includes('参考图')&&row[k]&&row[k].includes('.')){hasImg=true;break}}}if(hasImg)PQ.push({sheet:sn,row:i})}})}
+  if(!PQ.length){alert('没有可上架的商品（需要A列有图片的行）');document.getElementById('btnPub').disabled=false;return}
+  document.getElementById('btnPub').disabled=true;document.getElementById('btnStop').disabled=false;
+  document.getElementById('progSec').classList.remove('hidden');addL(`开始上架 ${PQ.length}件`,'info');procNext();
 }
-
-function updateDataFromRow(row) {
-    if (!currentData || !currentSheet) return;
-    const rows = currentData.sheets[currentSheet].rows;
-    const idx = rows.findIndex(r => r._row === row._row);
-    if (idx >= 0) rows[idx] = row;
+function stopPub(){PR=false;document.getElementById('btnPub').disabled=false;document.getElementById('btnStop').disabled=true;updProg();addL('已暂停','warn')}
+async function procNext(){
+  if(!PR||PI>=PQ.length){PR=false;document.getElementById('btnPub').disabled=false;document.getElementById('btnStop').disabled=true;updProg();addL(PI>=PQ.length?'✅ 全部完成':'已暂停','ok');return}
+  let it=PQ[PI];updProg();addL(`${it.sheet} #${it.row+1}`,'info');
+  try{let r=await(await fetch('/api/start-auto-upload',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sheet:it.sheet,rowIndex:it.row})})).json();
+    if(r.ok)addL(`✓ ${it.sheet}#${it.row+1}`,'ok');
+    else{addL(`✗ ${r.error||r.message}`,'err');if(!confirm(`出错: ${r.error||r.message}\n跳过继续?`)){stopPub();return}}
+  }catch(e){addL(`✗ ${e.message}`,'err');if(!confirm(`错误: ${e.message}\n跳过?`)){stopPub();return}}
+  PI++;if(PR)setTimeout(procNext,2000);
 }
+function updProg(){let t=PQ.length,d=PI,pct=t?Math.round(d/t*100):0;document.getElementById('progFill').style.width=pct+'%';document.getElementById('progTxt').textContent=`${d}/${t}`;if(PI<PQ.length&&PR)document.getElementById('progCur').textContent=`当前: ${PQ[PI].sheet}`}
 
-// 单元格更新
-function updateCell(sheetName, rowNum, header, value) {
-    if (!currentData) return;
-    const rows = currentData.sheets[sheetName].rows;
-    const row = rows.find(r => r._row === rowNum);
-    if (row) {
-        row[header] = value;
-    }
-}
-
-// 生成标题
-async function generateTitles() {
-    if (!currentData || !currentSheet) { alert('请先加载表格'); return; }
-    const sheet = currentData.sheets[currentSheet];
-    if (!sheet.rows.length) return;
-
-    setStatus('busy', '生成标题中...');
-
-    for (let row of sheet.rows) {
-        // 收集已有的AI属性
-        const attrs = {};
-        const aiHeaders = getAIHeaders(sheet.headers, currentSheet);
-        for (let h of aiHeaders) {
-            if (row[h]) attrs[h] = row[h];
-        }
-        const season = row['适用季节'] || '夏季';
-
-        try {
-            let resp = await fetch('/api/generate-title', {
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({ category: currentSheet, attributes: attrs, season: season })
-            });
-            let result = await resp.json();
-            if (result.ok && result.title) {
-                for (let key of Object.keys(row)) {
-                    if (key.includes('商品标题')) row[key] = result.title;
-                    if (key.includes('短标题')) row[key] = result.short_title || '';
-                }
-                updateDataFromRow(row);
-                log(`标题已生成: ${result.title}`, 'success');
-            }
-        } catch(e) {
-            log(`标题生成失败: ${e.message}`, 'error');
-        }
-    }
-
-    renderTable();
-    setStatus('ready', '就绪');
-}
-
-// 保存
-async function saveExcel() {
-    if (!currentData) { alert('请先加载表格'); return; }
-    setStatus('busy', '保存中...');
-    try {
-        await fetch('/api/save-excel', {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({ sheets: currentData.sheets })
-        });
-        log('已保存到 Excel', 'success');
-    } catch(e) {
-        log('保存失败: '+e.message, 'error');
-    }
-    setStatus('ready', '就绪');
-}
-
-// 导出
-function exportExcel() {
-    window.open('/api/export-excel', '_blank');
-}
-
-// 自动上架
-async function startAutoUpload() {
-    alert('浏览器自动化上架功能开发中，敬请期待');
-}
-
-// 状态
-function setStatus(state, text) {
-    const dot = document.getElementById('statusDot');
-    dot.className = 'status-dot ' + (state === 'busy' ? 'busy' : 'ready');
-    document.getElementById('statusText').textContent = text;
-}
-
-// 日志
-function log(msg, type) {
-    const panel = document.getElementById('logPanel');
-    panel.style.display = 'block';
-    const list = document.getElementById('logList');
-    const time = new Date().toLocaleTimeString();
-    list.innerHTML += `<div class="log-item"><span class="log-time">${time}</span><span class="log-${type}">${msg}</span></div>`;
-    list.scrollTop = list.scrollHeight;
-}
+function addL(m,t){let b=document.getElementById('log'),c=t==='ok'?'ok':t==='err'?'err':t==='warn'?'warn':'info';b.innerHTML+=`<div class="${c}">[${new Date().toLocaleTimeString()}] ${m}</div>`;b.scrollTop=b.scrollHeight}
+function setSt(s,t){document.getElementById('dot').className='dot'+(s==='busy'?' busy':'');document.getElementById('stText').textContent=t}
 </script>
 </body>
 </html>
